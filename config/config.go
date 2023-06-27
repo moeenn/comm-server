@@ -1,25 +1,27 @@
 package config
 
 type Config struct {
-	JWTConfig      *JWTConfig
+	ServerConfig   *ServerConfig
 	DatabaseConfig *DatabaseConfig
+	JWTConfig      *JWTConfig
 }
 
 func LoadConfig() (*Config, error) {
 	config := &Config{}
+
+	config.ServerConfig = loadServerConfig()
+	databaseConfig, err := loadDatabaseConfig()
+	if err != nil {
+		return config, err
+	}
 
 	jwtConfig, err := loadJWTConfig()
 	if err != nil {
 		return config, err
 	}
 
-	databaseConfig, err := loadDatabaseConfig()
-	if err != nil {
-		return config, err
-	}
-
-	config.JWTConfig = jwtConfig
 	config.DatabaseConfig = databaseConfig
+	config.JWTConfig = jwtConfig
 
 	return config, nil
 }

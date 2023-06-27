@@ -2,24 +2,14 @@ package jwt
 
 import (
 	"errors"
-	"os"
 	"reflect"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func getJWTSecret() string {
-	secret := os.Getenv("JWT_SECRET")
-	if secret == "" {
-		panic("failed to read JWT_SECRET value from the environment")
-	}
+// TODO: check if token has expired
 
-	return secret
-}
-
-func ValidateToken(token string) (string, error) {
-	secret := getJWTSecret()
-
+func ValidateToken(secret string, token string) (string, error) {
 	parsed, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
 		return []byte(secret), nil
 	})
