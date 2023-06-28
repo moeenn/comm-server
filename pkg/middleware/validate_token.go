@@ -22,7 +22,7 @@ func ValidateToken(secret string) http.HandlerFunc {
 			return
 		}
 
-		// TODO: store userId inside request context
+		// TODO: store userId inside request
 
 		fmt.Fprintf(w, "userId: %s", userId)
 	}

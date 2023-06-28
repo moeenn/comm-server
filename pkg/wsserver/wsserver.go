@@ -1,10 +1,9 @@
 package wsserver
 
 import (
-	"comm/pkg/logger"
 	connections "comm/pkg/wsserver/connections"
-	"fmt"
 	"io"
+	"log"
 
 	"golang.org/x/net/websocket"
 )
@@ -12,19 +11,17 @@ import (
 const BUF_SIZE = 2048
 
 type WSServer struct {
-	logger *logger.Logger
-	conns  *connections.Connections
+	conns *connections.Connections
 }
 
-func New(logger *logger.Logger) *WSServer {
+func New() *WSServer {
 	return &WSServer{
-		logger: logger,
-		conns:  connections.New(),
+		conns: connections.New(),
 	}
 }
 
 func (s *WSServer) HandleWS(ws *websocket.Conn) {
-	s.logger.Info(fmt.Sprintf("new incoming connection: %s", ws.RemoteAddr()))
+	log.Printf("info: new connection: %s", ws.RemoteAddr())
 	s.conns.Add(ws)
 	s.readLoop(ws)
 }
@@ -35,20 +32,20 @@ func (s *WSServer) readLoop(ws *websocket.Conn) {
 		n, err := ws.Read(buf)
 		if err != nil {
 
-			/** handle situation where the client closes the connection */
+			/* handle situation where the client closes the connection */
 			if err == io.EOF {
-				s.logger.Info("client disconnected socket")
+				log.Println("info: client disconnected socket")
 				break
 			}
 
-			/** TODO: do proper error handling */
-			s.logger.Error(fmt.Sprintf("read error: %v+", err))
+			/* TODO: do proper error handling */
+			log.Printf("error: %s\n", err.Error())
 
-			/** breaking out of the loop will close the websocket */
+			/* breaking out of the loop will close the websocket */
 			continue
 		}
 
-		/** echo the incoming message to all connected websockets */
+		/* TODO: process the incoming message */
 		msgBytes := buf[:n]
 		s.Broadcast(msgBytes)
 	}
@@ -58,5 +55,5 @@ func (s *WSServer) readLoop(ws *websocket.Conn) {
 }
 
 func (s *WSServer) Broadcast(b []byte) {
-	s.conns.BroadCast(b, s.logger)
+	s.conns.BroadCast(b)
 }

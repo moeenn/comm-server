@@ -1,7 +1,7 @@
 package wsserver
 
 import (
-	"comm/pkg/logger"
+	"log"
 	"sync"
 
 	"golang.org/x/net/websocket"
@@ -30,11 +30,11 @@ func (conn *Connections) Remove(ws *websocket.Conn) {
 	conn.mu.Unlock()
 }
 
-func (conn *Connections) BroadCast(b []byte, log *logger.Logger) {
+func (conn *Connections) BroadCast(b []byte) {
 	for ws := range conn.conns {
 		go func(ws *websocket.Conn) {
 			if _, err := ws.Write(b); err != nil {
-				log.Warn("failed to broadcast message to websocket")
+				log.Println("warning: failed to broadcast message to websocket")
 			}
 		}(ws)
 	}
