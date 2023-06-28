@@ -12,14 +12,12 @@ func ValidateToken(secret string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		token, err := parseToken(r)
 		if err != nil {
-			// TODO: log
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 
 		userId, err := jwt.ValidateToken(secret, token)
 		if err != nil {
-			// TODO: log
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}

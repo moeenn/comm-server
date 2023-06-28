@@ -2,47 +2,30 @@ package jwt
 
 import (
 	"errors"
-	"reflect"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// TODO: check if token has expired
-
 func ValidateToken(secret string, token string) (string, error) {
+	errorMessage := errors.New("invalid or expired JWT")
+
+	/**
+	 * the token will not parsed if it has already expired
+	 * expiry is checked automatically using the 'exp' claim
+	 */
 	parsed, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
 		return []byte(secret), nil
 	})
 
 	if err != nil || !parsed.Valid {
-		return "", errors.New("invalid or expired JWT")
+		return "", errorMessage
 	}
 
-	claims, err := extractClaims(parsed.Claims)
-	if err != nil {
-		return "", err
+	/* subject is the id of user to whom token was issued */
+	subject, err := parsed.Claims.GetSubject()
+	if err != nil || subject == "" {
+		return subject, errorMessage
 	}
 
-	userId, ok := claims["userId"]
-	if !ok {
-		return "", errors.New("validated token does not contain userId")
-	}
-
-	return userId.(string), nil
-}
-
-func extractClaims(claims jwt.Claims) (map[string]any, error) {
-	v := reflect.ValueOf(claims)
-	result := make(map[string]any)
-
-	if v.Kind() != reflect.Map {
-		return result, errors.New("token contains unknown data-structure")
-	}
-
-	for _, key := range v.MapKeys() {
-		value := v.MapIndex(key)
-		result[key.String()] = value.Interface()
-	}
-
-	return result, nil
+	return subject, nil
 }
