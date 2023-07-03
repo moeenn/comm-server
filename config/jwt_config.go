@@ -6,14 +6,21 @@ import (
 )
 
 type JWTConfig struct {
-	Secret string
+	ServerSecret string
+	ClientSecret string
 }
 
 func loadJWTConfig() (*JWTConfig, error) {
 	config := &JWTConfig{}
-	config.Secret = os.Getenv("JWT_SECRET")
-	if config.Secret == "" {
-		return config, errors.New("failed to read JWT_SECRET value from the environment")
+
+	config.ServerSecret = os.Getenv("JWT_SERVER_SECRET")
+	if config.ServerSecret == "" {
+		return config, errors.New("failed to read JWT_SERVER_SECRET value from the environment")
+	}
+
+	config.ClientSecret = os.Getenv("JWT_CLIENT_SECRET")
+	if config.ClientSecret == "" {
+		return config, errors.New("failed to read JWT_CLIENT_SECRET value from the environment")
 	}
 
 	return config, nil

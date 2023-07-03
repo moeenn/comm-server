@@ -3,6 +3,7 @@ package main
 import (
 	"comm/config"
 	"comm/pkg/wsserver"
+	"comm/routes/notify"
 	"fmt"
 	"log"
 	"net/http"
@@ -18,8 +19,10 @@ func main() {
 	}
 
 	server := wsserver.New()
-	http.Handle("/ws", websocket.Handler(server.HandleWS(config.JWTConfig.Secret)))
 
-	log.Printf("info: starting websocket server on port %s\n", config.ServerConfig.Port)
+	http.HandleFunc("/notify", notify.NotifyHandler(config.JWTConfig.ServerSecret))
+	http.Handle("/ws", websocket.Handler(server.HandleWS(config.JWTConfig.ClientSecret)))
+
+	log.Printf("info: starting server on port %s\n", config.ServerConfig.Port)
 	http.ListenAndServe(config.ServerConfig.HostPort(), nil)
 }

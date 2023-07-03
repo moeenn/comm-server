@@ -12,7 +12,7 @@ type Connections struct {
 	mu    sync.Mutex
 }
 
-func New() *Connections {
+func connectionSlice() *Connections {
 	return &Connections{
 		conns: make(map[string]*websocket.Conn),
 	}
@@ -26,11 +26,12 @@ func (conn *Connections) Add(userId string, ws *websocket.Conn) {
 
 func (conn *Connections) Remove(userId string) {
 	conn.mu.Lock()
+	conn.conns[userId].Close()
 	delete(conn.conns, userId)
 	conn.mu.Unlock()
 }
 
-func (conn *Connections) BroadCast(b []byte) {
+func (conn *Connections) Broadcast(b []byte) {
 	for _, ws := range conn.conns {
 		go func(ws *websocket.Conn) {
 			if _, err := ws.Write(b); err != nil {
