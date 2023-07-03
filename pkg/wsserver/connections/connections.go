@@ -8,30 +8,30 @@ import (
 )
 
 type Connections struct {
-	conns map[*websocket.Conn]bool
+	conns map[string]*websocket.Conn
 	mu    sync.Mutex
 }
 
 func New() *Connections {
 	return &Connections{
-		conns: make(map[*websocket.Conn]bool),
+		conns: make(map[string]*websocket.Conn),
 	}
 }
 
-func (conn *Connections) Add(ws *websocket.Conn) {
+func (conn *Connections) Add(userId string, ws *websocket.Conn) {
 	conn.mu.Lock()
-	conn.conns[ws] = true
+	conn.conns[userId] = ws
 	conn.mu.Unlock()
 }
 
-func (conn *Connections) Remove(ws *websocket.Conn) {
+func (conn *Connections) Remove(userId string) {
 	conn.mu.Lock()
-	delete(conn.conns, ws)
+	delete(conn.conns, userId)
 	conn.mu.Unlock()
 }
 
 func (conn *Connections) BroadCast(b []byte) {
-	for ws := range conn.conns {
+	for _, ws := range conn.conns {
 		go func(ws *websocket.Conn) {
 			if _, err := ws.Write(b); err != nil {
 				log.Println("warning: failed to broadcast message to websocket")

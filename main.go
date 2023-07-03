@@ -7,8 +7,6 @@ import (
 	"log"
 	"net/http"
 
-	"comm/pkg/middleware"
-
 	"golang.org/x/net/websocket"
 )
 
@@ -20,9 +18,7 @@ func main() {
 	}
 
 	server := wsserver.New()
-
-	http.HandleFunc("/test", middleware.ValidateToken(config.JWTConfig.Secret))
-	http.Handle("/ws", websocket.Handler(server.HandleWS))
+	http.Handle("/ws", websocket.Handler(server.HandleWS(config.JWTConfig.Secret)))
 
 	log.Printf("info: starting websocket server on port %s\n", config.ServerConfig.Port)
 	http.ListenAndServe(config.ServerConfig.HostPort(), nil)
