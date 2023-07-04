@@ -10,7 +10,7 @@ var (
 	errInvalid = errors.New("invalid or expired JWT")
 )
 
-func ValidateToken(secret string, token string) (string, error) {
+func ValidateClientToken(secret string, token string) (string, error) {
 	// the token will not parsed if it has already expired
 	// expiry is checked automatically using the 'exp' claim
 	parsed, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
@@ -28,4 +28,16 @@ func ValidateToken(secret string, token string) (string, error) {
 	}
 
 	return subject, nil
+}
+
+func ValidateServerToken(secret string, token string) error {
+	parsed, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
+		return []byte(secret), nil
+	})
+
+	if err != nil || !parsed.Valid {
+		return err
+	}
+
+	return nil
 }

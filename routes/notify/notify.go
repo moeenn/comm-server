@@ -15,7 +15,6 @@ type NotifyRequest struct {
 
 type NotifyResponse struct {
 	Message string   `json:"message"`
-	UserId  string   `json:"user_id,omitempty"`
 	UserIds []string `json:"user_ids"`
 	Payload string   `json:"payload"`
 }
@@ -23,8 +22,8 @@ type NotifyResponse struct {
 func NotifyHandler(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 
-	userId := r.Context().Value("userId").(string)
-	if userId == "" {
+	isAuthenticated := r.Context().Value("isAuthenticated").(bool)
+	if !isAuthenticated {
 		utils.JSON(w, http.StatusUnauthorized, apiError.ErrorResponse{
 			Error: "invalid or expired JWT",
 		})
@@ -46,7 +45,6 @@ func NotifyHandler(w http.ResponseWriter, r *http.Request) {
 
 	utils.JSON(w, http.StatusOK, NotifyResponse{
 		Message: "you have reached notify endpoint",
-		UserId:  userId,
 		UserIds: body.UserIds,
 		Payload: body.Payload,
 	})

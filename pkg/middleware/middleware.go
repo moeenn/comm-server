@@ -13,8 +13,13 @@ type Middleware func(http.Handler) http.Handler
 func ValidateBearerToken(jwtSecret string) Middleware {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
-			userId, _ := auth.ValidateBearerToken(jwtSecret, r)
-			ctx := context.WithValue(r.Context(), "userId", userId)
+			var ctx context.Context
+			if err := auth.ValidateBearerToken(jwtSecret, r); err != nil {
+				ctx = context.WithValue(r.Context(), "isAuthenticated", false)
+			} else {
+				ctx = context.WithValue(r.Context(), "isAuthenticated", true)
+			}
+
 			next.ServeHTTP(w, r.WithContext(ctx))
 		}
 

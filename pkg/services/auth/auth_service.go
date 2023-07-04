@@ -11,7 +11,7 @@ func ValidateQueryToken(jwtSecret string, r *http.Request) (string, error) {
 		return "", err
 	}
 
-	userId, err := jwt.ValidateToken(jwtSecret, token)
+	userId, err := jwt.ValidateClientToken(jwtSecret, token)
 	if err != nil {
 		return "", err
 	}
@@ -19,16 +19,15 @@ func ValidateQueryToken(jwtSecret string, r *http.Request) (string, error) {
 	return userId, nil
 }
 
-func ValidateBearerToken(jwtSecret string, r *http.Request) (string, error) {
+func ValidateBearerToken(jwtSecret string, r *http.Request) error {
 	token, err := GetTokenFromAuthHeader(r)
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	userId, err := jwt.ValidateToken(jwtSecret, token)
-	if err != nil {
-		return "", err
+	if err := jwt.ValidateServerToken(jwtSecret, token); err != nil {
+		return err
 	}
 
-	return userId, nil
+	return nil
 }
