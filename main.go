@@ -2,27 +2,19 @@ package main
 
 import (
 	"comm/config"
-	"comm/pkg/wsserver"
-	"comm/routes/notify"
+	"comm/pkg/server"
 	"fmt"
-	"log"
 	"net/http"
-
-	"golang.org/x/net/websocket"
+	"os"
 )
 
 func main() {
-	config, err := config.LoadConfig()
+	conf, err := config.LoadConfig()
 	if err != nil {
-		fmt.Printf("error: %v\n", err)
-		return
+		fmt.Fprintf(os.Stderr, "error: failed to load application config: %s\n", err.Error())
+		os.Exit(1)
 	}
 
-	server := wsserver.New()
-
-	http.HandleFunc("/notify", notify.NotifyHandler(config.JWTConfig.ServerSecret))
-	http.Handle("/ws", websocket.Handler(server.HandleWS(config.JWTConfig.ClientSecret)))
-
-	log.Printf("info: starting server on port %s\n", config.ServerConfig.Port)
-	http.ListenAndServe(config.ServerConfig.HostPort(), nil)
+	server := server.New(conf)
+	http.ListenAndServe(conf.ServerConfig.HostPort(), server.Router)
 }

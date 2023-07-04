@@ -2,7 +2,6 @@ package notify
 
 import (
 	"comm/pkg/error"
-	"comm/pkg/services/auth"
 	"comm/pkg/validator"
 	"encoding/json"
 	"net/http"
@@ -14,53 +13,46 @@ type NotifyRequest struct {
 }
 
 type NotifyResponse struct {
-	UserId  string   `json:"userId"`
+	Message string   `json:"message"`
+	UserId  string   `json:"user_id,omitempty"`
 	UserIds []string `json:"user_ids"`
 }
 
-func NotifyHandler(jwtSecret string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
+func NotifyHandler(w http.ResponseWriter, r *http.Request) {
+	encoder := json.NewEncoder(w)
+	decoder := json.NewDecoder(r.Body)
 
-		decoder := json.NewDecoder(r.Body)
-		encoder := json.NewEncoder(w)
-
-		userId, err := auth.ValidateBearerToken(jwtSecret, r)
-		if err != nil {
-			errorResponse := error.ErrorResponse{
-				Error: err.Error(),
-			}
-
-			w.WriteHeader(http.StatusUnauthorized)
-			encoder.Encode(errorResponse)
-			return
-		}
-
-		body := NotifyRequest{}
-		if err := decoder.Decode(&body); err != nil {
-			errorResponse := error.ErrorResponse{
-				Error: err.Error(),
-			}
-
-			w.WriteHeader(http.StatusBadRequest)
-			encoder.Encode(errorResponse)
-			return
-		}
-
-		if err := validator.Struct(body); len(err) != 0 {
-			w.WriteHeader(http.StatusUnprocessableEntity)
-			encoder.Encode(err)
-			return
-		}
-
-		res := NotifyResponse{
-			UserId:  userId,
-			UserIds: body.UserIds,
-		}
-
-		encoder.Encode(res)
+	userId := r.Context().Value("userId").(string)
+	if userId == "" {
+		w.WriteHeader(http.StatusUnauthorized)
+		encoder.Encode(error.ErrorResponse{
+			Error: "invalid or expired JWT",
+		})
+		return
 	}
+
+	body := NotifyRequest{}
+	if err := decoder.Decode(&body); err != nil {
+		errorResponse := error.ErrorResponse{
+			Error: err.Error(),
+		}
+
+		w.WriteHeader(http.StatusBadRequest)
+		encoder.Encode(errorResponse)
+		return
+	}
+
+	if err := validator.Struct(body); len(err) != 0 {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		encoder.Encode(err)
+		return
+	}
+
+	res := NotifyResponse{
+		Message: "you have reached notify endpoint",
+		UserId:  userId,
+		UserIds: body.UserIds,
+	}
+
+	encoder.Encode(res)
 }

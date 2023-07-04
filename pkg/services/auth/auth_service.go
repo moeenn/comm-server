@@ -2,12 +2,11 @@ package auth
 
 import (
 	"comm/pkg/jwt"
-	"comm/pkg/services/token"
 	"net/http"
 )
 
 func ValidateQueryToken(jwtSecret string, r *http.Request) (string, error) {
-	token, err := token.GetTokenFromQuery(r)
+	token, err := GetTokenFromQuery(r)
 	if err != nil {
 		return "", err
 	}
@@ -21,7 +20,7 @@ func ValidateQueryToken(jwtSecret string, r *http.Request) (string, error) {
 }
 
 func ValidateBearerToken(jwtSecret string, r *http.Request) (string, error) {
-	token, err := token.GetTokenFromAuthHeader(r)
+	token, err := GetTokenFromAuthHeader(r)
 	if err != nil {
 		return "", err
 	}

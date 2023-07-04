@@ -8,8 +8,8 @@ var instance = validator.New()
 
 type ValidationError struct {
 	Field string `json:"field"`
-	Tag   string `json:"tag"`
-	Value any    `json:"value"`
+	Tag   string `json:"tag,omitempty"`
+	Value any    `json:"value,omitempty"`
 }
 
 func Struct(data any) []ValidationError {
