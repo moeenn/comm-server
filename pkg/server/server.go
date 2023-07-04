@@ -82,7 +82,7 @@ func (server *Server) WSHandler(conn *websocket.Conn) {
 	userId, err := auth.ValidateQueryToken(server.config.JWTConfig.ClientSecret, conn.Request())
 	if err != nil {
 		errorResponse := error.ErrorResponse{
-			Error: "error: " + err.Error(),
+			Error: err.Error(),
 		}
 
 		resJson, _ := json.Marshal(errorResponse)

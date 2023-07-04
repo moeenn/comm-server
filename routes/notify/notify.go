@@ -1,7 +1,8 @@
 package notify
 
 import (
-	"comm/pkg/error"
+	apiError "comm/pkg/error"
+	"comm/pkg/server/utils"
 	"comm/pkg/validator"
 	"encoding/json"
 	"net/http"
@@ -9,23 +10,22 @@ import (
 
 type NotifyRequest struct {
 	UserIds []string `json:"user_ids" validate:"required"`
-	// Payload string   `json:"payload"`
+	Payload string   `json:"payload" validate:"required"`
 }
 
 type NotifyResponse struct {
 	Message string   `json:"message"`
 	UserId  string   `json:"user_id,omitempty"`
 	UserIds []string `json:"user_ids"`
+	Payload string   `json:"payload"`
 }
 
 func NotifyHandler(w http.ResponseWriter, r *http.Request) {
-	encoder := json.NewEncoder(w)
 	decoder := json.NewDecoder(r.Body)
 
 	userId := r.Context().Value("userId").(string)
 	if userId == "" {
-		w.WriteHeader(http.StatusUnauthorized)
-		encoder.Encode(error.ErrorResponse{
+		utils.JSON(w, http.StatusUnauthorized, apiError.ErrorResponse{
 			Error: "invalid or expired JWT",
 		})
 		return
@@ -33,26 +33,21 @@ func NotifyHandler(w http.ResponseWriter, r *http.Request) {
 
 	body := NotifyRequest{}
 	if err := decoder.Decode(&body); err != nil {
-		errorResponse := error.ErrorResponse{
+		utils.JSON(w, http.StatusBadRequest, apiError.ErrorResponse{
 			Error: err.Error(),
-		}
-
-		w.WriteHeader(http.StatusBadRequest)
-		encoder.Encode(errorResponse)
+		})
 		return
 	}
 
 	if err := validator.Struct(body); len(err) != 0 {
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		encoder.Encode(err)
+		utils.JSON(w, http.StatusUnprocessableEntity, err)
 		return
 	}
 
-	res := NotifyResponse{
+	utils.JSON(w, http.StatusOK, NotifyResponse{
 		Message: "you have reached notify endpoint",
 		UserId:  userId,
 		UserIds: body.UserIds,
-	}
-
-	encoder.Encode(res)
+		Payload: body.Payload,
+	})
 }

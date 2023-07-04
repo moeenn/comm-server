@@ -5,6 +5,10 @@ import (
 	"os"
 )
 
+var (
+	errDBUriRead = errors.New("failed to read DATABASE_URI from environment")
+)
+
 type DatabaseConfig struct {
 	URI string
 }
@@ -14,7 +18,7 @@ func loadDatabaseConfig() (*DatabaseConfig, error) {
 	uri := os.Getenv("DATABASE_URI")
 
 	if uri == "" {
-		return config, errors.New("failed to read DATABASE_URI from environment")
+		return config, errDBUriRead
 	}
 
 	config.URI = uri
