@@ -13,24 +13,28 @@ import (
 
 	"comm/database"
 
+	"comm/pkg/notification"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"golang.org/x/net/websocket"
 )
 
 type Server struct {
-	config      *config.Config
-	db          *database.Database
-	Router      *chi.Mux
-	connections *Connections
+	config              *config.Config
+	db                  *database.Database
+	Router              *chi.Mux
+	connections         *Connections
+	notificationChannel chan notification.Notification
 }
 
 func New(config *config.Config, db *database.Database) *Server {
 	server := &Server{
-		config:      config,
-		db:          db,
-		Router:      chi.NewRouter(),
-		connections: NewConnectionSlice(),
+		config:              config,
+		db:                  db,
+		Router:              chi.NewRouter(),
+		connections:         NewConnectionSlice(),
+		notificationChannel: make(chan notification.Notification, 10),
 	}
 
 	// register all middleware here
@@ -40,8 +44,9 @@ func New(config *config.Config, db *database.Database) *Server {
 	server.Router.Handle("/ws", websocket.Handler(server.WSHandler))
 
 	// register all routes here
-	server.Router.Post("/api/notify", notify.NotifyHandler)
+	server.Router.Post("/api/notify", notify.NotifyHandler(server.notificationChannel))
 
+	go server.processNotifications()
 	return server
 }
 
@@ -60,6 +65,9 @@ func (server *Server) connectionReadLoop(conn *websocket.Conn) {
 	buf := make([]byte, 1024)
 
 	for {
+
+		// TODO: check if channel has any pending notification and push them out
+
 		n, err := conn.Read(buf)
 		if err != nil {
 			if err == io.EOF {
@@ -100,4 +108,19 @@ func (server *Server) WSHandler(conn *websocket.Conn) {
 
 	// activate the socket
 	server.connectionReadLoop(conn)
+}
+
+func (s *Server) processNotifications() {
+	for notification := range s.notificationChannel {
+		for _, userId := range notification.UserIds {
+			conn, ok := s.connections.Conns[userId]
+			if !ok {
+				// user is not online
+
+				continue
+			}
+
+			conn.Write(notification.Payload)
+		}
+	}
 }
