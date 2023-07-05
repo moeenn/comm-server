@@ -1,2 +1,2 @@
 .env
-client/*.go
+database/client/*.go
